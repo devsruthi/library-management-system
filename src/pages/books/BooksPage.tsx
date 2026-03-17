@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { Plus, BookOpen, SlidersHorizontal } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useBooks } from "@/hooks/useBooks";
+import { useDebounce } from "@/hooks/useDebounce";
 import { SearchBar } from "@/components/molecules/SearchBar";
 import { BookCard } from "@/components/molecules/BookCard";
 import { EmptyState } from "@/components/molecules/EmptyState";
-import { PageLoader } from "@/components/molecules/LoadingSpinner";
+import { LoadingSpinner } from "@/components/molecules/LoadingSpinner";
 import { Button } from "@/components/atoms/Button";
 import { Badge } from "@/components/atoms/Badge";
 import {
@@ -24,8 +25,12 @@ export function BooksPage() {
   const [selectedGenre, setSelectedGenre] = useState("all");
   const [availableOnly, setAvailableOnly] = useState(false);
 
+  // Debounce the raw input — Supabase is only queried after the user
+  // stops typing for 350 ms, not on every keystroke.
+  const debouncedSearch = useDebounce(search, 350);
+
   const { books, genres, isLoading } = useBooks({
-    search: search || undefined,
+    search: debouncedSearch || undefined,
     genreId: selectedGenre !== "all" ? selectedGenre : undefined,
     availableOnly,
   });
@@ -35,14 +40,12 @@ export function BooksPage() {
     selectedGenre !== "all" && genres.find((g) => g.id === selectedGenre)?.name,
   ].filter(Boolean);
 
-  if (isLoading) return <PageLoader text="Loading books..." />;
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <p className="text-muted-foreground text-sm">
-            {books.length} {books.length === 1 ? "book" : "books"} found
+            {isLoading ? "Searching..." : `${books.length} ${books.length === 1 ? "book" : "books"} found`}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -108,7 +111,11 @@ export function BooksPage() {
         </div>
       )}
 
-      {books.length === 0 ? (
+      {isLoading ? (
+        <div className="flex justify-center py-20">
+          <LoadingSpinner size="lg" text="Loading books..." />
+        </div>
+      ) : books.length === 0 ? (
         <EmptyState
           icon={BookOpen}
           title="No books found"
