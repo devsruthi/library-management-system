@@ -230,7 +230,6 @@ export function BooksPage() {
                     <td className="px-4 py-3">
                       <Badge
                         variant={book.is_available ? "success" : "destructive"}
-                        className="shadow-sm"
                       >
                         {book.is_available ? "Available" : "Unavailable"}
                       </Badge>
@@ -243,7 +242,7 @@ export function BooksPage() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-8 w-8 p-0"
+                            className="h-8 w-8 p-0 shadow-sm"
                             onClick={() => navigate(`/books/${book.id}/edit`)}
                           >
                             <Pencil className="h-3.5 w-3.5" />
@@ -252,7 +251,7 @@ export function BooksPage() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            className="h-8 w-8 p-0 shadow-sm text-destructive hover:text-destructive hover:bg-destructive/10"
                             onClick={() => setDeleteTarget(book)}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
