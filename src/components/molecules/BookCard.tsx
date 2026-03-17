@@ -12,7 +12,7 @@ interface BookCardProps {
 }
 
 export function BookCard({ book, onClick, actions, className }: BookCardProps) {
-  const isAvailable = book.available_copies > 0;
+  const isAvailable = book.is_available;
 
   return (
     <Card
@@ -35,7 +35,7 @@ export function BookCard({ book, onClick, actions, className }: BookCardProps) {
         )}
         <div className="absolute top-2 right-2">
           <Badge variant={isAvailable ? "success" : "destructive"}>
-            {isAvailable ? `${book.available_copies} available` : "Unavailable"}
+            {isAvailable ? "Available" : "Unavailable"}
           </Badge>
         </div>
       </div>

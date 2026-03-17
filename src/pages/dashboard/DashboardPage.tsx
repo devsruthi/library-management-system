@@ -44,15 +44,15 @@ export function DashboardPage() {
     setIsLoading(true);
     try {
       const [booksRes, profilesRes, borrowsRes, reservationsRes] = await Promise.all([
-        supabase.from("books").select("id, available_copies", { count: "exact" }),
+        supabase.from("books").select("id, is_available", { count: "exact" }),
         supabase.from("profiles").select("id", { count: "exact" }),
         supabase.from("borrow_records").select("id, status, due_date, book:books(title), member:profiles(full_name)").eq("status", "borrowed"),
         supabase.from("reservations").select("id").eq("status", "pending"),
       ]);
 
-      const books = (booksRes.data ?? []) as Array<{ id: string; available_copies: number }>;
+      const books = (booksRes.data ?? []) as Array<{ id: string; is_available: boolean }>;
       const totalBooks = booksRes.count ?? 0;
-      const availableBooks = books.filter((b) => (b.available_copies ?? 0) > 0).length;
+      const availableBooks = books.filter((b) => b.is_available).length;
       const now = new Date();
       const borrowData = (borrowsRes.data ?? []) as Array<{
         id: string; due_date: string;
@@ -163,8 +163,8 @@ export function DashboardPage() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {isLibrarian ? (
             <>
-              <StatCard title="Total Books" value={stats?.totalBooks ?? 0} icon={BookOpen} description="In catalogue" />
-              <StatCard title="Available Now" value={stats?.availableBooks ?? 0} icon={TrendingUp} description="Ready to borrow" iconClassName="bg-emerald-100" />
+              <StatCard title="Total Books" value={stats?.totalBooks ?? 0} icon={BookOpen} description="Titles in catalogue" />
+              <StatCard title="Available" value={stats?.availableBooks ?? 0} icon={TrendingUp} description="Ready to borrow" iconClassName="bg-emerald-100" />
               <StatCard title="Active Borrows" value={stats?.activeBorrows ?? 0} icon={BookMarked} description="Currently checked out" iconClassName="bg-blue-100" />
               <StatCard title="Members" value={stats?.totalMembers ?? 0} icon={Users} description="Registered members" iconClassName="bg-purple-100" />
             </>

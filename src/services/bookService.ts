@@ -16,8 +16,6 @@ export interface BookFormData {
   publication_year?: number;
   description?: string;
   cover_url?: string;
-  total_copies: number;
-  available_copies: number;
 }
 
 export const bookService = {
@@ -49,7 +47,7 @@ export const bookService = {
       query = query.eq("genre_id", filters.genreId);
     }
     if (filters.availableOnly) {
-      query = query.gt("available_copies", 0);
+      query = query.eq("is_available", true);
     }
 
     const { data, error } = await query;

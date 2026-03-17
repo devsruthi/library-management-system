@@ -66,12 +66,9 @@ create table if not exists public.books (
   publication_year integer,
   description      text,
   cover_url        text,
-  total_copies     integer not null default 1,
-  available_copies integer not null default 1,
+  is_available     boolean not null default true,
   created_at       timestamptz not null default now(),
-  updated_at       timestamptz not null default now(),
-  constraint available_lte_total check (available_copies <= total_copies),
-  constraint positive_copies check (total_copies >= 0 and available_copies >= 0)
+  updated_at       timestamptz not null default now()
 );
 
 -- ============================================================

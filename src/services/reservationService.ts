@@ -8,7 +8,7 @@ export const reservationService = {
       .from("reservations")
       .select(
         `*, 
-        book:books(id, title, author, isbn, available_copies, total_copies, genre:genres(id, name, created_at)),
+        book:books(id, title, author, isbn, is_available, genre:genres(id, name, created_at)),
         member:profiles(id, full_name, email, role, membership_type, created_at, updated_at, phone, address)`
       )
       .order("reserved_at", { ascending: false });
@@ -20,7 +20,7 @@ export const reservationService = {
     const { data, error } = await supabase
       .from("reservations")
       .select(
-        `*, book:books(id, title, author, isbn, available_copies, total_copies, genre:genres(id, name, created_at))`
+        `*, book:books(id, title, author, isbn, is_available, genre:genres(id, name, created_at))`
       )
       .eq("member_id", memberId)
       .order("reserved_at", { ascending: false });
@@ -30,8 +30,7 @@ export const reservationService = {
 
   /**
    * Reserve a book for a member.
-   * Decrements available_copies atomically so the copy is held and
-   * won't be accidentally assigned as a borrow to someone else.
+   * Marks the book unavailable atomically so it can't be assigned to someone else.
    */
   async reserveBook(bookId: string, memberId: string): Promise<Reservation> {
     // Hold the copy first — fails if no copies available
@@ -45,7 +44,7 @@ export const reservationService = {
       .insert({ book_id: bookId, member_id: memberId, status: "pending" })
       .select(
         `*, 
-        book:books(id, title, author, isbn, available_copies, total_copies, genre:genres(id, name, created_at)),
+        book:books(id, title, author, isbn, is_available, genre:genres(id, name, created_at)),
         member:profiles(id, full_name, email, role, membership_type, created_at, updated_at, phone, address)`
       )
       .single();
@@ -97,8 +96,7 @@ export const reservationService = {
 
   /**
    * Fulfill a reservation — the member has arrived and is taking the book.
-   * Creates a borrow_record for the member. The copy was already decremented
-   * at reservation time, so available_copies stays as-is until the book is returned.
+   * Creates a borrow_record for the member. The book stays unavailable until returned.
    */
   async fulfillReservation(
     reservationId: string,

@@ -36,8 +36,6 @@ export function BookFormPage() {
     publication_year: undefined,
     description: "",
     cover_url: "",
-    total_copies: 1,
-    available_copies: 1,
   });
 
   useEffect(() => {
@@ -53,8 +51,6 @@ export function BookFormPage() {
             publication_year: book.publication_year ?? undefined,
             description: book.description ?? "",
             cover_url: book.cover_url ?? "",
-            total_copies: book.total_copies,
-            available_copies: book.available_copies,
           });
         }
       }).finally(() => setIsLoading(false));
@@ -70,10 +66,6 @@ export function BookFormPage() {
     const newErrors: typeof errors = {};
     if (!form.title.trim()) newErrors.title = "Title is required";
     if (!form.author.trim()) newErrors.author = "Author is required";
-    if (form.total_copies < 1) newErrors.total_copies = "Must have at least 1 copy";
-    if (form.available_copies < 0) newErrors.available_copies = "Cannot be negative";
-    if (form.available_copies > form.total_copies)
-      newErrors.available_copies = "Cannot exceed total copies";
     if (form.publication_year && (form.publication_year < 1 || form.publication_year > new Date().getFullYear() + 1))
       newErrors.publication_year = "Invalid year";
     setErrors(newErrors);
@@ -182,27 +174,6 @@ export function BookFormPage() {
                   placeholder="e.g. 2023"
                   min={1}
                   max={new Date().getFullYear() + 1}
-                />
-              </FormField>
-
-              <FormField label="Total Copies" htmlFor="totalCopies" required error={errors.total_copies}>
-                <Input
-                  id="totalCopies"
-                  type="number"
-                  value={form.total_copies}
-                  onChange={(e) => set("total_copies", parseInt(e.target.value) || 0)}
-                  min={1}
-                />
-              </FormField>
-
-              <FormField label="Available Copies" htmlFor="availableCopies" required error={errors.available_copies}>
-                <Input
-                  id="availableCopies"
-                  type="number"
-                  value={form.available_copies}
-                  onChange={(e) => set("available_copies", parseInt(e.target.value) || 0)}
-                  min={0}
-                  max={form.total_copies}
                 />
               </FormField>
 

@@ -253,7 +253,7 @@ function AssignBorrowDialog({
                 <SelectItem value="none">Select a book...</SelectItem>
                 {books.map((b) => (
                   <SelectItem key={b.id} value={b.id}>
-                    {b.title} ({b.available_copies} left)
+                    {b.title}
                   </SelectItem>
                 ))}
               </SelectContent>

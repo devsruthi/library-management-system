@@ -31,8 +31,7 @@ export interface Book {
   publication_year: number | null;
   description: string | null;
   cover_url: string | null;
-  total_copies: number;
-  available_copies: number;
+  is_available: boolean;
   created_at: string;
   updated_at: string;
   genre?: Genre;

@@ -377,15 +377,12 @@ function AddReservationDialog({
                 {books.map((b) => (
                   <SelectItem key={b.id} value={b.id}>
                     {b.title}
-                    <span className="ml-1 text-muted-foreground">
-                      ({b.available_copies} available)
-                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             {books.length === 0 && (
-              <p className="text-xs text-destructive">No books with available copies right now.</p>
+              <p className="text-xs text-destructive">No available books right now.</p>
             )}
           </div>
           <div className="space-y-1.5">

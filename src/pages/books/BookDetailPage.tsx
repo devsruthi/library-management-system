@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Edit, Trash2, BookOpen, Calendar, Hash, Tag, Layers, AlertCircle } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, BookOpen, Calendar, Hash, AlertCircle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useBook } from "@/hooks/useBooks";
 import { bookService } from "@/services/bookService";
@@ -35,7 +35,7 @@ export function BookDetailPage() {
     </div>
   );
 
-  const isAvailable = book.available_copies > 0;
+  const isAvailable = book.is_available;
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -91,7 +91,7 @@ export function BookDetailPage() {
 
           <div className="flex flex-wrap gap-2">
             <Badge variant={isAvailable ? "success" : "destructive"}>
-              {isAvailable ? `${book.available_copies} of ${book.total_copies} available` : "Currently unavailable"}
+              {isAvailable ? "Available" : "Currently Unavailable"}
             </Badge>
             {book.genre && <Badge variant="secondary">{book.genre.name}</Badge>}
           </div>
@@ -103,8 +103,6 @@ export function BookDetailPage() {
             {book.publication_year && (
               <InfoItem icon={Calendar} label="Published" value={book.publication_year.toString()} />
             )}
-            <InfoItem icon={Layers} label="Total Copies" value={book.total_copies.toString()} />
-            <InfoItem icon={Tag} label="Available" value={book.available_copies.toString()} />
           </div>
 
           {book.description && (
