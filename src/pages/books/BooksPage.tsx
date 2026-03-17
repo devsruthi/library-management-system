@@ -63,7 +63,7 @@ export function BooksPage() {
         <SearchBar
           value={search}
           onChange={setSearch}
-          placeholder="Search by title, author, or ISBN..."
+          placeholder="Search by title or author..."
           className="flex-1"
         />
         <Select value={selectedGenre} onValueChange={setSelectedGenre}>

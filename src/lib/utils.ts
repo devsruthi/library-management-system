@@ -47,6 +47,10 @@ export function calculateDueDate(borrowedAt: Date = new Date(), days = 14): Date
   return due;
 }
 
+export function normalizeSearch(raw: string): string {
+  return raw.trim().toLowerCase().replace(/\s+/g, "");
+}
+
 export function getInitials(name: string | null | undefined): string {
   if (!name) return "?";
   return name

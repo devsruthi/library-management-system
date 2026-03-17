@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { normalizeSearch } from "@/lib/utils";
 import type { Book, Genre } from "@/types";
 
 export interface BookFilters {
@@ -21,15 +22,28 @@ export interface BookFormData {
 
 export const bookService = {
   async getBooks(filters: BookFilters = {}): Promise<Book[]> {
+    // Step 1: if there's a search term, get matching IDs via the space-insensitive
+    // RPC function. This handles "robertmartin" → "Robert Martin", etc.
+    let matchingIds: string[] | null = null;
+    if (filters.search && normalizeSearch(filters.search).length > 0) {
+      const { data: idRows, error: searchErr } = await supabase.rpc(
+        "search_book_ids",
+        { p_search: filters.search }
+      );
+      if (searchErr) throw searchErr;
+      matchingIds = ((idRows ?? []) as { id: string }[]).map((r) => r.id);
+      // No IDs matched — return early, no point running the second query
+      if (matchingIds.length === 0) return [];
+    }
+
+    // Step 2: fetch full book data with genre join, applying the ID filter + other filters
     let query = supabase
       .from("books")
       .select("*, genre:genres(id, name, created_at)")
       .order("title");
 
-    if (filters.search) {
-      query = query.or(
-        `title.ilike.%${filters.search}%,author.ilike.%${filters.search}%,isbn.ilike.%${filters.search}%`
-      );
+    if (matchingIds !== null) {
+      query = query.in("id", matchingIds);
     }
     if (filters.genreId) {
       query = query.eq("genre_id", filters.genreId);
