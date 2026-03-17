@@ -1,4 +1,4 @@
-export type UserRole = "member" | "librarian";
+export type UserRole = "member" | "librarian"; // mirrors public.user_role enum in Supabase
 export type BorrowStatus = "borrowed" | "returned" | "overdue";
 export type ReservationStatus = "pending" | "available" | "fulfilled" | "cancelled";
 export type NotificationType = "reservation_available" | "overdue" | "general" | "return_reminder";

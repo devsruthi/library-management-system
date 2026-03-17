@@ -7,6 +7,11 @@
 create extension if not exists "pgcrypto";
 
 -- ============================================================
+-- ENUMS
+-- ============================================================
+create type public.user_role as enum ('member', 'librarian');
+
+-- ============================================================
 -- PROFILES TABLE
 -- Extends auth.users with role and additional info
 -- ============================================================
@@ -17,7 +22,7 @@ create table if not exists public.profiles (
   phone       text,
   address     text,
   membership_type text not null default 'standard',
-  role        text not null default 'member' check (role in ('member', 'librarian')),
+  role        public.user_role not null default 'member',
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
