@@ -1,0 +1,64 @@
+---
+description: React and TypeScript component patterns for LibraryOS
+globs: src/**/*.tsx
+alwaysApply: false
+---
+
+# React & Component Patterns
+
+## Component Placement
+- **atoms/** — no props drilling beyond 1 level, no hooks, no service calls
+- **molecules/** — can accept callback props, use `cn()` for class merging
+- **organisms/** — can use `useAuth()` and call services directly if needed
+- New UI primitives go in `atoms/` following the existing Radix UI + CVA pattern
+
+## Styling
+- Use `cn()` from `src/lib/utils` (clsx + tailwind-merge) for all conditional classes
+- Design tokens via CSS variables — never hardcode colors like `text-indigo-600`; use `text-primary`, `text-muted-foreground`, `bg-card` etc.
+- Responsive: always mobile-first. Sidebar hides on mobile (`lg:translate-x-0`).
+
+## Component conventions
+```tsx
+// ✅ Named exports, forwardRef for atoms
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(...)
+
+// ✅ Regular function for pages/organisms
+export function BooksPage() { ... }
+
+// ✅ Sub-components at bottom of file, not exported
+function BookRow({ record }: { record: BorrowRecord }) { ... }
+```
+
+## State & Data Fetching
+```tsx
+// ✅ Use the hook, not raw supabase in pages
+const { books, isLoading, refetch } = useBooks({ search, genreId });
+
+// ❌ Never do this in a page/component
+const { data } = await supabase.from("books").select("*");
+```
+
+## Auth & Role Gating
+```tsx
+const { profile, isLibrarian } = useAuth();
+
+// UI gating
+{isLibrarian && <Button>Add Book</Button>}
+
+// Route gating — wrap with <LibrarianRoute> in App.tsx
+```
+
+## Error Handling
+```tsx
+// ✅ Services throw, pages/hooks catch and toast
+try {
+  await bookService.createBook(payload);
+  toast.success("Book added");
+} catch (err) {
+  toast.error(err instanceof Error ? err.message : "Failed to save book");
+}
+```
+
+## Empty & Loading States
+- Loading → `<PageLoader text="..." />` (full page) or `<Skeleton />` (inline)
+- Empty → `<EmptyState icon={X} title="..." description="..." action={...} />`

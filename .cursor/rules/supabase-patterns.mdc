@@ -1,0 +1,60 @@
+---
+description: Supabase query patterns, RLS, and inventory RPC conventions for LibraryOS
+globs: src/services/**,supabase/**
+alwaysApply: false
+---
+
+# Supabase Patterns
+
+## Client
+- Single client instance in `src/lib/supabase.ts` — never create new clients elsewhere
+- Typed as `createClient<any>` — use explicit type casts in services (`as Book`, `as Profile[]`)
+
+## Service Pattern
+```ts
+// ✅ Every method: query → check error → cast and return
+async getBooks(filters: BookFilters): Promise<Book[]> {
+  const { data, error } = await supabase.from("books").select("*");
+  if (error) throw error;
+  return (data ?? []) as Book[];
+}
+```
+
+## Joins
+Use PostgREST dot-notation for joins — always alias with the relation name:
+```ts
+// books with genre, borrow_records with book + member
+.select(`*, genre:genres(id, name, created_at)`)
+.select(`*, book:books(id, title, author), member:profiles(id, full_name, email)`)
+```
+
+## Inventory RPC Functions (atomic, use these — never raw UPDATE for copies)
+| Function | When to call |
+|---|---|
+| `borrow_book(p_book_id)` | Member borrows — decrements `available_copies` |
+| `return_book(p_book_id)` | Member returns — increments `available_copies` |
+| `reserve_book(p_book_id)` | Librarian reserves — decrements `available_copies` (holds copy) |
+| `release_reservation(p_book_id)` | Reservation cancelled — increments `available_copies` |
+
+```ts
+const { error } = await supabase.rpc("borrow_book", { p_book_id: bookId });
+if (error) throw error;
+```
+
+## RLS Summary
+- `profiles`: own row read/write; librarians read all
+- `books / genres`: all authenticated users read; librarians write
+- `borrow_records`: members read own; librarians read + write all
+- `reservations`: members read own; librarians manage all
+- `notifications`: users read + mark-read own; librarians insert
+
+## Migrations
+- Files in `supabase/migrations/` named `NNN_description.sql`
+- Current files: `001_initial_schema`, `002_seed_genres`, `003_rpc_functions`
+- All new tables must include `alter table ... enable row level security`
+- All new inventory-affecting operations need an RPC function — no raw copy updates from the client
+
+## Auth Flow
+- Sign up → Supabase creates `auth.users` → trigger `handle_new_user()` auto-creates `profiles` row with `role = 'member'`
+- Promote to librarian: manually set `profiles.role = 'librarian'` in Supabase dashboard
+- `get_my_role()` SQL function used inside RLS policies — do not remove it

@@ -1,0 +1,46 @@
+---
+description: Project architecture, folder structure, and layer responsibilities for LibraryOS
+alwaysApply: true
+---
+
+# Project Architecture
+
+## Stack
+- **Frontend**: Vite + React 18 + TypeScript
+- **Styling**: Tailwind CSS v3 + CSS custom properties (HSL design tokens in `index.css`)
+- **UI Primitives**: Radix UI (no shadcn CLI — components hand-rolled in `src/components/atoms/`)
+- **Routing**: React Router v6
+- **Backend**: Supabase (Auth + PostgreSQL + RLS + RPC functions)
+- **Toasts**: Sonner (`toast.success / toast.error`)
+- **Dates**: date-fns (all date helpers live in `src/lib/utils.ts`)
+
+## Folder Structure
+
+```
+src/
+├── components/
+│   ├── atoms/        # Primitive, stateless UI: Button, Input, Badge, Card, Dialog, Select…
+│   ├── molecules/    # Composed from atoms: SearchBar, BookCard, StatCard, FormField, EmptyState…
+│   ├── organisms/    # Feature-level: Sidebar, Header, NotificationBell
+│   └── templates/   # Page shells: DashboardLayout (wraps Outlet)
+├── context/          # React context only — AuthContext (user, profile, role, sign in/out)
+├── hooks/            # Data-fetching hooks: useBooks, useMembers, useBorrows, useReservations
+├── lib/              # supabase.ts (client init), utils.ts (cn, formatDate, etc.)
+├── pages/            # One folder per feature: auth/, books/, members/, borrowing/, reservations/, dashboard/
+├── services/         # One file per domain: bookService, borrowService, memberService…
+└── types/            # database.ts — all TypeScript types mirroring DB schema
+supabase/migrations/  # Ordered SQL files: 001_initial_schema, 002_seed_genres, 003_rpc_functions
+```
+
+## Layer Rules
+- **Pages** orchestrate — they call hooks/services and compose organisms/molecules. No raw `supabase` calls in pages.
+- **Services** own all Supabase queries. Return typed domain objects, throw on error.
+- **Hooks** call services, manage loading/error state, expose `refetch`.
+- **Atoms** are pure UI — no business logic, no service calls.
+- **Context** holds only global auth state. Feature data stays in hooks.
+
+## Roles
+- `member` — default for all registrations
+- `librarian` — manually set in Supabase dashboard (`profiles.role`)
+- Role is a PostgreSQL enum `public.user_role ('member' | 'librarian')`
+- Use `useAuth().isLibrarian` to gate UI. Use RLS policies to gate data.
