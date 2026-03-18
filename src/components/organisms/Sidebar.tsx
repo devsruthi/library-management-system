@@ -30,7 +30,6 @@ interface NavItem {
 
 const memberNav: NavItem[] = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
-  { label: "Browse Books", to: "/books", icon: BookOpen },
   { label: "My Borrows", to: "/my-borrows", icon: History },
   { label: "My Reservations", to: "/my-reservations", icon: BookMarked },
 ];

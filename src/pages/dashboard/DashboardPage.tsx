@@ -235,7 +235,7 @@ export function DashboardPage() {
       // Build last-8-weeks personal activity
       const hist = (historyRes.data ?? []) as Array<{ id: string; borrowed_at: string }>;
       const activityDates = hist.map((r) => r.borrowed_at);
-      setMemberBorrowHistory(buildRegistrationTrend(activityDates, 7));
+      setMemberBorrowHistory(buildRegistrationTrend(activityDates, 4));
     } finally {
       setIsLoading(false);
     }
@@ -566,7 +566,7 @@ export function DashboardPage() {
               <CardTitle className="text-base flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-blue-600" />
                 My Reading Activity
-                <span className="text-xs font-normal text-muted-foreground ml-1">Books borrowed per week (last 8 weeks)</span>
+                <span className="text-xs font-normal text-muted-foreground ml-1">Books borrowed per week (last 5 weeks)</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
@@ -624,7 +624,6 @@ export function DashboardPage() {
                     <div className="flex flex-col items-center py-8 text-center">
                       <BookOpen className="h-8 w-8 text-muted-foreground/30 mb-2" />
                       <p className="text-sm text-muted-foreground">No books currently borrowed</p>
-                      <Button size="sm" className="mt-3" onClick={() => navigate("/books")}>Browse Books</Button>
                     </div>
                   ) : (
                     <div className="space-y-2">
