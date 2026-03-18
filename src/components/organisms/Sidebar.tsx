@@ -145,9 +145,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 function SidebarNavItem({ item, onNavigate }: { item: NavItem; onNavigate: () => void }) {
   const location = useLocation();
   const isActive =
-    item.to === "/dashboard"
-      ? location.pathname === "/dashboard"
-      : location.pathname.startsWith(item.to);
+    item.to === "/books"
+      ? location.pathname === "/books"
+      : location.pathname === item.to || location.pathname.startsWith(item.to + "/");
 
   return (
     <NavLink

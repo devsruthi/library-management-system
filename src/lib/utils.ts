@@ -53,7 +53,7 @@ export function normalizeSearch(raw: string): string {
 
 export const MEMBERSHIP_CONFIG = {
   standard: {
-    label: "Standard (Student)",
+    label: "Standard",
     loanDays: 14,
     finePerDay: 20,
     description: "For students · 14-day loans · ₹20/day fine",
