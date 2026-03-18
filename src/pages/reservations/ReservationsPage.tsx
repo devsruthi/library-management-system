@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Clock, BellRing, XCircle, Loader2, CheckCircle2 } from "lucide-react";
+import { Clock, BellRing, XCircle, Loader2, CheckCircle2, BookOpen, User } from "lucide-react";
 import { useAllReservations } from "@/hooks/useReservations";
 import { reservationService } from "@/services/reservationService";
 import { bookService } from "@/services/bookService";
@@ -23,6 +23,25 @@ import { formatDate } from "@/lib/utils";
 import type { Book, Profile, Reservation } from "@/types";
 import { toast } from "sonner";
 
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+
+function groupByBook(reservations: Reservation[]): Reservation[][] {
+  const map = new Map<string, Reservation[]>();
+  for (const r of reservations) {
+    const key = r.book_id;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(r);
+  }
+  // Sort each group by reserved_at ascending (first come, first served)
+  return Array.from(map.values()).map((group) =>
+    [...group].sort(
+      (a, b) => new Date(a.reserved_at).getTime() - new Date(b.reserved_at).getTime()
+    )
+  );
+}
+
+// ─── Page ──────────────────────────────────────────────────────────────────────
+
 export function ReservationsPage() {
   const [searchParams] = useSearchParams();
   const prefillBookId = searchParams.get("bookId");
@@ -36,6 +55,9 @@ export function ReservationsPage() {
   const available = reservations.filter((r) => r.status === "available");
   const fulfilled = reservations.filter((r) => r.status === "fulfilled");
   const cancelled = reservations.filter((r) => r.status === "cancelled");
+
+  const pendingGroups = groupByBook(pending);
+  const availableGroups = groupByBook(available);
 
   const handleNotify = async (reservation: Reservation) => {
     try {
@@ -54,7 +76,7 @@ export function ReservationsPage() {
   const handleCancel = async (reservation: Reservation) => {
     try {
       await reservationService.cancelReservation(reservation.id, reservation.book_id);
-      toast.success("Reservation cancelled — copy released back to inventory");
+      toast.success("Reservation cancelled");
       refetch();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to cancel");
@@ -65,6 +87,7 @@ export function ReservationsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex flex-wrap gap-3">
           <StatPill label="Pending" count={pending.length} color="amber" />
@@ -84,56 +107,101 @@ export function ReservationsPage() {
           <TabsTrigger value="cancelled">Cancelled ({cancelled.length})</TabsTrigger>
         </TabsList>
 
+        {/* ── Pending ── */}
         <TabsContent value="pending" className="mt-4">
-          {pending.length === 0 ? (
+          {pendingGroups.length === 0 ? (
             <EmptyState icon={Clock} title="No pending reservations" />
           ) : (
-            <div className="space-y-3">
-              {pending.map((r) => (
-                <ReservationCard
-                  key={r.id}
-                  reservation={r}
-                  onNotify={() => handleNotify(r)}
-                  onCancel={() => handleCancel(r)}
-                />
-              ))}
+            <div className="space-y-4">
+              {pendingGroups.map((group) => {
+                const book = group[0].book;
+                const bookIsAvailable = book?.is_available ?? false;
+                return (
+                  <BookReservationGroup
+                    key={group[0].book_id}
+                    book={book}
+                    reservations={group}
+                    renderActions={(r, index) => (
+                      <div className="flex items-center gap-2">
+                        {/* Notify only for first in queue AND only when book is available */}
+                        {index === 0 && bookIsAvailable && (
+                          <Button size="sm" onClick={() => handleNotify(r)}>
+                            <BellRing className="h-3.5 w-3.5" />
+                            Notify Member
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => handleCancel(r)}
+                        >
+                          <XCircle className="h-3.5 w-3.5" />
+                          Cancel
+                        </Button>
+                      </div>
+                    )}
+                  />
+                );
+              })}
             </div>
           )}
         </TabsContent>
 
+        {/* ── Ready for Pickup ── */}
         <TabsContent value="available" className="mt-4">
-          {available.length === 0 ? (
+          {availableGroups.length === 0 ? (
             <EmptyState icon={BellRing} title="No books waiting for pickup" />
           ) : (
-            <div className="space-y-3">
-              {available.map((r) => (
-                <ReservationCard
-                  key={r.id}
-                  reservation={r}
-                  onFulfill={() => setFulfillTarget(r)}
-                  onCancel={() => handleCancel(r)}
+            <div className="space-y-4">
+              {availableGroups.map((group) => (
+                <BookReservationGroup
+                  key={group[0].book_id}
+                  book={group[0].book}
+                  reservations={group}
+                  renderActions={(r, index) => (
+                    <div className="flex items-center gap-2">
+                      {index === 0 && (
+                        <Button size="sm" onClick={() => setFulfillTarget(r)}>
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          Member Picked Up
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => handleCancel(r)}
+                      >
+                        <XCircle className="h-3.5 w-3.5" />
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
                 />
               ))}
             </div>
           )}
         </TabsContent>
 
+        {/* ── Fulfilled ── */}
         <TabsContent value="fulfilled" className="mt-4">
           {fulfilled.length === 0 ? (
             <EmptyState icon={CheckCircle2} title="No fulfilled reservations" />
           ) : (
             <div className="space-y-3">
-              {fulfilled.map((r) => <ReservationCard key={r.id} reservation={r} />)}
+              {fulfilled.map((r) => <FlatReservationRow key={r.id} reservation={r} />)}
             </div>
           )}
         </TabsContent>
 
+        {/* ── Cancelled ── */}
         <TabsContent value="cancelled" className="mt-4">
           {cancelled.length === 0 ? (
             <EmptyState icon={XCircle} title="No cancelled reservations" />
           ) : (
             <div className="space-y-3">
-              {cancelled.map((r) => <ReservationCard key={r.id} reservation={r} />)}
+              {cancelled.map((r) => <FlatReservationRow key={r.id} reservation={r} />)}
             </div>
           )}
         </TabsContent>
@@ -156,7 +224,125 @@ export function ReservationsPage() {
   );
 }
 
-// ─── Sub-components ────────────────────────────────────────────────────────────
+// ─── BookReservationGroup ──────────────────────────────────────────────────────
+
+function BookReservationGroup({
+  book,
+  reservations,
+  renderActions,
+}: {
+  book: Book | undefined;
+  reservations: Reservation[];
+  renderActions: (r: Reservation, index: number) => React.ReactNode;
+}) {
+  const isAvailable = book?.is_available ?? false;
+
+  return (
+    <Card className="overflow-hidden">
+      {/* Book header */}
+      <div className="flex items-center gap-4 px-5 py-4 border-b bg-muted/30">
+        <div className="h-12 w-12 rounded-full overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shrink-0">
+          {book?.cover_url ? (
+            <img src={book.cover_url} alt={book.title} className="h-full w-full object-cover" />
+          ) : (
+            <BookOpen className="h-5 w-5 text-primary/40" />
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-sm leading-tight">{book?.title ?? "Unknown Book"}</p>
+          <p className="text-xs text-muted-foreground">{book?.author}</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Badge variant={isAvailable ? "success" : "destructive"}>
+            {isAvailable ? "Available" : "Unavailable"}
+          </Badge>
+          <span className="text-xs text-muted-foreground font-medium">
+            {reservations.length} {reservations.length === 1 ? "request" : "requests"}
+          </span>
+        </div>
+      </div>
+
+      {/* Queue list */}
+      <div className="divide-y">
+        {reservations.map((r, index) => (
+          <div
+            key={r.id}
+            className={`flex items-center gap-4 px-5 py-3 ${index === 0 ? "bg-primary/[0.03]" : ""}`}
+          >
+            {/* Position badge */}
+            <div
+              className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                index === 0
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {index + 1}
+            </div>
+
+            {/* Member avatar + info */}
+            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+              <User className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium leading-tight">
+                {r.member?.full_name ?? r.member?.email ?? "Unknown"}
+                {index === 0 && (
+                  <span className="ml-2 text-xs font-normal text-primary">Next in line</span>
+                )}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Reserved {formatDate(r.reserved_at)}
+                {r.notified_at && ` · Notified ${formatDate(r.notified_at)}`}
+              </p>
+            </div>
+
+            {/* Actions */}
+            {renderActions(r, index)}
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+// ─── FlatReservationRow (fulfilled / cancelled) ────────────────────────────────
+
+function FlatReservationRow({ reservation }: { reservation: Reservation }) {
+  const statusVariant: Record<string, "success" | "destructive" | "secondary"> = {
+    fulfilled: "success",
+    cancelled: "destructive",
+  };
+
+  return (
+    <Card>
+      <CardContent className="py-3 px-4">
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-full overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shrink-0">
+            {reservation.book?.cover_url ? (
+              <img src={reservation.book.cover_url} alt={reservation.book.title} className="h-full w-full object-cover" />
+            ) : (
+              <BookOpen className="h-4 w-4 text-primary/40" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm font-medium">{reservation.book?.title ?? "Unknown"}</p>
+              <Badge variant={statusVariant[reservation.status] ?? "secondary"} className="capitalize">
+                {reservation.status}
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {reservation.member?.full_name ?? reservation.member?.email} · {formatDate(reservation.reserved_at)}
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── StatPill ─────────────────────────────────────────────────────────────────
 
 function StatPill({ label, count, color }: { label: string; count: number; color: string }) {
   const colorMap: Record<string, string> = {
@@ -171,73 +357,8 @@ function StatPill({ label, count, color }: { label: string; count: number; color
   );
 }
 
-function ReservationCard({
-  reservation,
-  onNotify,
-  onCancel,
-  onFulfill,
-}: {
-  reservation: Reservation;
-  onNotify?: () => void;
-  onCancel?: () => void;
-  onFulfill?: () => void;
-}) {
-  const statusVariant: Record<string, "info" | "success" | "warning" | "destructive" | "secondary"> = {
-    pending: "warning",
-    available: "success",
-    fulfilled: "secondary",
-    cancelled: "destructive",
-  };
+// ─── FulfillDialog ────────────────────────────────────────────────────────────
 
-  return (
-    <Card>
-      <CardContent className="py-4 px-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2 mb-1">
-              <p className="font-semibold text-sm">{reservation.book?.title ?? "Unknown"}</p>
-              <Badge variant={statusVariant[reservation.status] ?? "secondary"} className="capitalize">
-                {reservation.status === "available" ? "Ready for Pickup" : reservation.status}
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Reserved for{" "}
-              <span className="font-medium text-foreground">
-                {reservation.member?.full_name ?? reservation.member?.email ?? "Unknown"}
-              </span>
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Reserved on {formatDate(reservation.reserved_at)}
-              {reservation.notified_at && ` · Notified ${formatDate(reservation.notified_at)}`}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {onNotify && (
-              <Button size="sm" onClick={onNotify}>
-                <BellRing className="h-3.5 w-3.5" />
-                Notify Member
-              </Button>
-            )}
-            {onFulfill && (
-              <Button size="sm" onClick={onFulfill}>
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                Member Picked Up
-              </Button>
-            )}
-            {onCancel && (
-              <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={onCancel}>
-                <XCircle className="h-3.5 w-3.5" />
-                Cancel
-              </Button>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-/** Dialog shown when a member arrives to pick up their reserved book */
 function FulfillDialog({
   reservation,
   onClose,
@@ -309,6 +430,8 @@ function FulfillDialog({
   );
 }
 
+// ─── AddReservationDialog ─────────────────────────────────────────────────────
+
 function AddReservationDialog({
   open,
   onClose,
@@ -330,8 +453,7 @@ function AddReservationDialog({
 
   useEffect(() => {
     if (open) {
-      // Only show books that actually have available copies to hold
-      bookService.getBooks({ availableOnly: true }).then(setBooks);
+      bookService.getBooks().then(setBooks);
       memberService.getMembers().then(setMembers);
     }
   }, [open]);
@@ -344,7 +466,7 @@ function AddReservationDialog({
     setIsSaving(true);
     try {
       await reservationService.reserveBook(bookId, memberId);
-      toast.success("Book reserved — copy is now held for this member");
+      toast.success("Reservation created successfully");
       onSuccess();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create reservation");
@@ -359,8 +481,7 @@ function AddReservationDialog({
         <DialogHeader>
           <DialogTitle>Reserve Book for Member</DialogTitle>
           <DialogDescription>
-            A copy will be held for the member immediately — the available count will decrease
-            so it won't be assigned to someone else by mistake.
+            This book will be reserved for the member. Once it becomes available, they will be notified to come and pick it up.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
@@ -370,7 +491,7 @@ function AddReservationDialog({
             </label>
             <Select value={bookId || "none"} onValueChange={(v) => setBookId(v === "none" ? "" : v)}>
               <SelectTrigger>
-                <SelectValue placeholder="Select available book" />
+                <SelectValue placeholder="Select a book" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">Select a book...</SelectItem>
@@ -381,9 +502,6 @@ function AddReservationDialog({
                 ))}
               </SelectContent>
             </Select>
-            {books.length === 0 && (
-              <p className="text-xs text-destructive">No available books right now.</p>
-            )}
           </div>
           <div className="space-y-1.5">
             <label className="text-sm font-medium">
@@ -406,10 +524,10 @@ function AddReservationDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={isSaving || books.length === 0}>
+          <Button onClick={handleSubmit} disabled={isSaving}>
             {isSaving
               ? <><Loader2 className="h-4 w-4 animate-spin" />Saving...</>
-              : "Reserve & Hold Copy"
+              : "Reserve"
             }
           </Button>
         </DialogFooter>

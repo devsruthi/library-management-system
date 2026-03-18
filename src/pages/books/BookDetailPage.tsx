@@ -121,18 +121,21 @@ export function BookDetailPage() {
             <CardTitle className="text-base">Library Actions</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-3">
-            <Button
-              onClick={() => navigate(`/borrowing?bookId=${id}`)}
-              disabled={!isAvailable}
-            >
-              Assign to Member
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => navigate(`/reservations?bookId=${id}`)}
-            >
-              Reserve for Member
-            </Button>
+            {isAvailable && (
+              <Button
+                onClick={() => navigate(`/borrowing?bookId=${id}`)}
+              >
+                Assign to Member
+              </Button>
+            )}
+            {!isAvailable && (
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/reservations?bookId=${id}`)}
+              >
+                Reserve for Member
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
