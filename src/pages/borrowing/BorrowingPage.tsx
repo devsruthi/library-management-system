@@ -289,9 +289,9 @@ function ActiveRow({ record, onReturn }: { record: BorrowRecord; onReturn: () =>
     <tr className={`hover:bg-muted/30 transition-colors ${overdue ? "bg-red-50/40" : ""}`}>
       {/* Cover */}
       <td className="px-4 py-3">
-        <div className="h-10 w-10 rounded-full overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shrink-0">
+        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shrink-0 p-[4px]">
           {record.book?.cover_url ? (
-            <img src={record.book.cover_url} alt={record.book.title} className="h-full w-full object-cover" />
+            <img src={record.book.cover_url} alt={record.book.title} className="h-full w-full object-cover rounded-full" />
           ) : (
             <BookOpen className="h-4 w-4 text-primary/40" />
           )}
@@ -391,9 +391,9 @@ function ReturnedRow({ record }: { record: BorrowRecord }) {
     <tr className="hover:bg-muted/30 transition-colors">
       {/* Cover */}
       <td className="px-4 py-3">
-        <div className="h-10 w-10 rounded-full overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shrink-0">
+        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shrink-0 p-[4px]">
           {record.book?.cover_url ? (
-            <img src={record.book.cover_url} alt={record.book.title} className="h-full w-full object-cover" />
+            <img src={record.book.cover_url} alt={record.book.title} className="h-full w-full object-cover rounded-full" />
           ) : (
             <BookOpen className="h-4 w-4 text-primary/40" />
           )}

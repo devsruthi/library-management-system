@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase";
 import type { BorrowRecord } from "@/types";
 import { calculateDueDate } from "@/lib/utils";
 
-const BOOK_SELECT = `id, title, author, isbn, is_available, genre:genres(id, name, created_at)`;
+const BOOK_SELECT = `id, title, author, isbn, cover_url, is_available, genre:genres(id, name, created_at)`;
 const MEMBER_SELECT = `id, full_name, email, role, membership_type, created_at, updated_at, phone, address`;
 
 export const borrowService = {
