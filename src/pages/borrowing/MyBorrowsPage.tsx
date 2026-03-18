@@ -8,15 +8,19 @@ import { PageLoader } from "@/components/molecules/LoadingSpinner";
 import { EmptyState } from "@/components/molecules/EmptyState";
 import { BookOpen, BookMarked, RotateCcw, CalendarDays, Clock, CheckCircle2 } from "lucide-react";
 import { formatDate, isOverdue } from "@/lib/utils";
-import { differenceInDays, parseISO } from "date-fns";
+import { differenceInDays, parseISO, startOfDay } from "date-fns";
 import type { BorrowRecord } from "@/types";
 import { cn } from "@/lib/utils";
 
 function daysOverdue(d: string) {
-  return Math.max(0, differenceInDays(new Date(), parseISO(d)));
+  const today = startOfDay(new Date());
+  const due = startOfDay(parseISO(d));
+  return Math.max(0, differenceInDays(today, due));
 }
 function daysLeft(d: string) {
-  return Math.max(0, differenceInDays(parseISO(d), new Date()));
+  const today = startOfDay(new Date());
+  const due = startOfDay(parseISO(d));
+  return Math.max(0, differenceInDays(due, today));
 }
 
 export function MyBorrowsPage() {
@@ -98,6 +102,14 @@ export function MyBorrowsPage() {
 
 // ─── Active borrow card ─────────────────────────────────────────────────────────
 
+function getUrgencyStyles(overdue: boolean, remaining: number) {
+  if (overdue) return "border-red-200 !bg-red-50/40";
+  if (remaining === 0) return "!bg-red-50/25";
+  if (remaining <= 2) return "!bg-red-50/20 border-red-200/40";
+  if (remaining <= 4) return "!bg-amber-50/15";
+  return "";
+}
+
 function ActiveBorrowCard({ record }: { record: BorrowRecord }) {
   const navigate = useNavigate();
   const overdue = isOverdue(record.due_date);
@@ -108,7 +120,7 @@ function ActiveBorrowCard({ record }: { record: BorrowRecord }) {
     <Card
       className={cn(
         "overflow-hidden transition-shadow hover:shadow-md",
-        overdue && "border-red-200 bg-red-50/30"
+        getUrgencyStyles(overdue, remaining)
       )}
     >
       <CardContent className="p-0">
@@ -156,7 +168,9 @@ function ActiveBorrowCard({ record }: { record: BorrowRecord }) {
           {/* Status & badge */}
           <div className="flex flex-col items-end justify-between shrink-0">
             <Badge
-              variant={overdue ? "destructive" : "info"}
+              variant={
+                overdue ? "destructive" : remaining <= 2 ? "warning" : "info"
+              }
               className="shadow-sm"
             >
               {overdue ? `${days}d overdue` : remaining === 0 ? "Due today" : `${remaining}d left`}

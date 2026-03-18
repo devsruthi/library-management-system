@@ -24,7 +24,7 @@ import { EmptyState } from "@/components/molecules/EmptyState";
 import { formatDate, isOverdue, MEMBERSHIP_CONFIG } from "@/lib/utils";
 import type { Book, Profile, BorrowRecord, MembershipType } from "@/types";
 import { toast } from "sonner";
-import { differenceInDays, parseISO } from "date-fns";
+import { differenceInDays, parseISO, startOfDay } from "date-fns";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -39,11 +39,15 @@ function matchesSearch(r: BorrowRecord, search: string): boolean {
 }
 
 function daysOverdue(dueDate: string): number {
-  return Math.max(0, differenceInDays(new Date(), parseISO(dueDate)));
+  const today = startOfDay(new Date());
+  const due = startOfDay(parseISO(dueDate));
+  return Math.max(0, differenceInDays(today, due));
 }
 
 function daysRemaining(dueDate: string): number {
-  return Math.max(0, differenceInDays(parseISO(dueDate), new Date()));
+  const today = startOfDay(new Date());
+  const due = startOfDay(parseISO(dueDate));
+  return Math.max(0, differenceInDays(due, today));
 }
 
 function calcFine(dueDate: string, membershipType: string): number {

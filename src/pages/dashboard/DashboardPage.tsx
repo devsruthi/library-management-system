@@ -63,10 +63,14 @@ interface GenreSlice { name: string; value: number }
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function daysOverdue(d: string) {
-  return Math.max(0, differenceInDays(new Date(), parseISO(d)));
+  const today = startOfDay(new Date());
+  const due = startOfDay(parseISO(d));
+  return Math.max(0, differenceInDays(today, due));
 }
 function daysLeft(d: string) {
-  return Math.max(0, differenceInDays(parseISO(d), new Date()));
+  const today = startOfDay(new Date());
+  const due = startOfDay(parseISO(d));
+  return Math.max(0, differenceInDays(due, today));
 }
 function calcFine(dueDate: string, membershipType: string): number {
   const days = daysOverdue(dueDate);
