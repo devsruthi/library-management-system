@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   BookOpen,
   Users,
@@ -46,7 +46,13 @@ const librarianNav: NavItem[] = [
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const { profile, isLibrarian, signOut } = useAuth();
+  const navigate = useNavigate();
   const navItems = isLibrarian ? librarianNav : memberNav;
+
+  const handleProfileClick = () => {
+    onClose();
+    navigate("/profile/edit");
+  };
 
   return (
     <>
@@ -102,12 +108,16 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
         {/* User info & sign out */}
         <div className="p-3">
-          <div className="flex items-center gap-3 rounded-lg px-2 py-2 mb-2">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
+          <button
+            onClick={handleProfileClick}
+            className="w-full flex items-center gap-3 rounded-lg px-2 py-2 mb-2 hover:bg-sidebar-accent/50 transition-colors text-left group"
+            title="Edit profile"
+          >
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold ring-2 ring-transparent group-hover:ring-primary/30 transition-all">
               {(profile?.full_name ?? profile?.email ?? "?")[0].toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium leading-none truncate">
+              <p className="text-sm font-medium leading-none truncate group-hover:text-primary transition-colors">
                 {profile?.full_name || "User"}
               </p>
               <p className="text-xs text-muted-foreground truncate mt-0.5">
@@ -117,7 +127,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <Badge variant={isLibrarian ? "default" : "secondary"} className="shrink-0 text-[10px]">
               {isLibrarian ? "Librarian" : "Member"}
             </Badge>
-          </div>
+          </button>
           <Button
             variant="outline"
             size="sm"

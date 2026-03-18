@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Mail, Phone, MapPin, Calendar, BookMarked, Clock } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Calendar, BookMarked, Clock, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import { memberService } from "@/services/memberService";
 import { borrowService } from "@/services/borrowService";
@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback } from "@/components/atoms/Avatar";
 import { Card, CardContent } from "@/components/atoms/Card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/atoms/Tabs";
 import { PageLoader } from "@/components/molecules/LoadingSpinner";
-import { formatDate, getInitials, isOverdue } from "@/lib/utils";
+import { formatDate, getInitials, isOverdue, MEMBERSHIP_CONFIG } from "@/lib/utils";
 import type { Profile, BorrowRecord, Reservation } from "@/types";
 
 export function MemberDetailPage() {
@@ -44,10 +44,16 @@ export function MemberDetailPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-        <ArrowLeft className="h-4 w-4" />
-        Back
-      </Button>
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => navigate(`/members/${id}/edit`)}>
+          <Pencil className="h-4 w-4" />
+          Edit Profile
+        </Button>
+      </div>
 
       <Card>
         <CardContent className="p-6">
@@ -63,7 +69,9 @@ export function MemberDetailPage() {
                 <Badge variant={member.role === "librarian" ? "default" : "secondary"}>
                   {member.role}
                 </Badge>
-                <Badge variant="outline">{member.membership_type}</Badge>
+                <Badge variant="outline">
+                  {MEMBERSHIP_CONFIG[member.membership_type as keyof typeof MEMBERSHIP_CONFIG]?.label ?? member.membership_type}
+                </Badge>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-1 gap-x-4">
                 {member.email && (

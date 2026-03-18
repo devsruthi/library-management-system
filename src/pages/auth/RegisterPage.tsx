@@ -6,18 +6,28 @@ import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { Label } from "@/components/atoms/Label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/atoms/Card";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/atoms/Select";
+import { MEMBERSHIP_CONFIG } from "@/lib/utils";
+import type { MembershipType } from "@/types";
 
 export function RegisterPage() {
   const navigate = useNavigate();
   const { signUp } = useAuth();
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [membershipType, setMembershipType] = useState<MembershipType>("standard");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  const selectedConfig = MEMBERSHIP_CONFIG[membershipType];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,9 +41,13 @@ export function RegisterPage() {
       setError("Password must be at least 6 characters");
       return;
     }
+    if (phone && !/^\d+$/.test(phone.replace(/[\s\-\+]/g, ""))) {
+      setError("Phone number must contain only digits");
+      return;
+    }
 
     setIsLoading(true);
-    const { error } = await signUp(email, password, fullName);
+    const { error } = await signUp(email, password, fullName, phone, membershipType);
     if (error) {
       setError(error.message);
       setIsLoading(false);
@@ -51,9 +65,7 @@ export function RegisterPage() {
             <span className="text-3xl">✓</span>
           </div>
           <h2 className="text-xl font-bold mb-1">Account created!</h2>
-          <p className="text-muted-foreground text-sm">
-            Redirecting you to sign in...
-          </p>
+          <p className="text-muted-foreground text-sm">Redirecting you to sign in...</p>
         </div>
       </div>
     );
@@ -82,8 +94,9 @@ export function RegisterPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Full name */}
               <div className="space-y-1.5">
-                <Label htmlFor="fullName">Full name</Label>
+                <Label htmlFor="fullName">Full name <span className="text-destructive">*</span></Label>
                 <Input
                   id="fullName"
                   type="text"
@@ -94,8 +107,10 @@ export function RegisterPage() {
                   autoComplete="name"
                 />
               </div>
+
+              {/* Email */}
               <div className="space-y-1.5">
-                <Label htmlFor="email">Email address</Label>
+                <Label htmlFor="email">Email address <span className="text-destructive">*</span></Label>
                 <Input
                   id="email"
                   type="email"
@@ -106,8 +121,47 @@ export function RegisterPage() {
                   autoComplete="email"
                 />
               </div>
+
+              {/* Phone */}
               <div className="space-y-1.5">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="phone">Phone number</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="+91 98765 43210"
+                  value={phone}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^[\d\s\+\-]*$/.test(val)) setPhone(val);
+                  }}
+                  autoComplete="tel"
+                />
+              </div>
+
+              {/* Membership type */}
+              <div className="space-y-1.5">
+                <Label htmlFor="membershipType">Membership type <span className="text-destructive">*</span></Label>
+                <Select
+                  value={membershipType}
+                  onValueChange={(v) => setMembershipType(v as MembershipType)}
+                >
+                  <SelectTrigger id="membershipType">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="standard">{MEMBERSHIP_CONFIG.standard.label}</SelectItem>
+                    <SelectItem value="public">{MEMBERSHIP_CONFIG.public.label}</SelectItem>
+                  </SelectContent>
+                </Select>
+                {/* Membership info pill */}
+                <div className="rounded-lg bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
+                  {selectedConfig.description}
+                </div>
+              </div>
+
+              {/* Password */}
+              <div className="space-y-1.5">
+                <Label htmlFor="password">Password <span className="text-destructive">*</span></Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -128,8 +182,10 @@ export function RegisterPage() {
                   </button>
                 </div>
               </div>
+
+              {/* Confirm password */}
               <div className="space-y-1.5">
-                <Label htmlFor="confirmPassword">Confirm password</Label>
+                <Label htmlFor="confirmPassword">Confirm password <span className="text-destructive">*</span></Label>
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -149,10 +205,7 @@ export function RegisterPage() {
 
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Creating account...
-                  </>
+                  <><Loader2 className="h-4 w-4 animate-spin" />Creating account...</>
                 ) : (
                   "Create account"
                 )}
@@ -161,10 +214,7 @@ export function RegisterPage() {
 
             <div className="mt-6 text-center text-sm">
               <span className="text-muted-foreground">Already have an account? </span>
-              <Link
-                to="/login"
-                className="font-medium text-primary hover:underline"
-              >
+              <Link to="/login" className="font-medium text-primary hover:underline">
                 Sign in
               </Link>
             </div>

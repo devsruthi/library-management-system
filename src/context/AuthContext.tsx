@@ -19,7 +19,9 @@ interface AuthContextValue {
   signUp: (
     email: string,
     password: string,
-    fullName: string
+    fullName: string,
+    phone?: string,
+    membershipType?: "standard" | "public"
   ) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -77,13 +79,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error as Error | null };
   };
 
-  const signUp = async (email: string, password: string, fullName: string) => {
-    const { error } = await supabase.auth.signUp({
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName: string,
+    phone?: string,
+    membershipType: "standard" | "public" = "standard"
+  ) => {
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { full_name: fullName } },
     });
-    return { error: error as Error | null };
+    if (error) return { error: error as Error | null };
+
+    // Update profile with extra fields once the trigger has created the row
+    if (data.user) {
+      await supabase
+        .from("profiles")
+        .update({ phone: phone || null, membership_type: membershipType })
+        .eq("id", data.user.id);
+    }
+    return { error: null };
   };
 
   const signOut = async () => {

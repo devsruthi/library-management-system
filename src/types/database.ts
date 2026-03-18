@@ -2,7 +2,7 @@ export type UserRole = "member" | "librarian"; // mirrors public.user_role enum 
 export type BorrowStatus = "borrowed" | "returned" | "overdue";
 export type ReservationStatus = "pending" | "available" | "fulfilled" | "cancelled";
 export type NotificationType = "reservation_available" | "overdue" | "general" | "return_reminder";
-export type MembershipType = "standard" | "premium";
+export type MembershipType = "standard" | "public";
 
 export interface Profile {
   id: string;

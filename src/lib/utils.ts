@@ -51,6 +51,21 @@ export function normalizeSearch(raw: string): string {
   return raw.trim().toLowerCase().replace(/\s+/g, "");
 }
 
+export const MEMBERSHIP_CONFIG = {
+  standard: {
+    label: "Standard (Student)",
+    loanDays: 14,
+    finePerDay: 20,
+    description: "For students · 14-day loans · ₹20/day fine",
+  },
+  public: {
+    label: "Public",
+    loanDays: 20,
+    finePerDay: 50,
+    description: "For public members · 20-day loans · ₹50/day fine",
+  },
+} as const;
+
 export function getInitials(name: string | null | undefined): string {
   if (!name) return "?";
   return name

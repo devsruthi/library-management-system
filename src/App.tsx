@@ -10,6 +10,7 @@ import { BookDetailPage } from "@/pages/books/BookDetailPage";
 import { BookFormPage } from "@/pages/books/BookFormPage";
 import { MembersPage } from "@/pages/members/MembersPage";
 import { MemberDetailPage } from "@/pages/members/MemberDetailPage";
+import { ProfileEditPage } from "@/pages/members/ProfileEditPage";
 import { BorrowingPage } from "@/pages/borrowing/BorrowingPage";
 import { MyBorrowsPage } from "@/pages/borrowing/MyBorrowsPage";
 import { ReservationsPage } from "@/pages/reservations/ReservationsPage";
@@ -110,6 +111,17 @@ function AppRoutes() {
             </LibrarianRoute>
           }
         />
+        <Route
+          path="members/:id/edit"
+          element={
+            <LibrarianRoute>
+              <ProfileEditPage />
+            </LibrarianRoute>
+          }
+        />
+
+        {/* Member editing their own profile */}
+        <Route path="profile/edit" element={<ProfileEditPage />} />
         <Route
           path="borrowing"
           element={
